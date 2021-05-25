@@ -4,12 +4,24 @@ import gym
 from gym import spaces
 import cv2
 
-class NoopResetEnv(gym.Wrapper):
+class CustomWrapper(gym.Wrapper):
+    def reset(self, **kwargs):
+        return self._reset(**kwargs)
+
+class CustomObservationWrapper(gym.ObservationWrapper):
+    def observation(self, frame):
+        return self._observation(frame)
+
+class CustomRewardWrapper(gym.RewardWrapper):
+    def reward(self, reward):
+        return self._reward(reward)
+
+class NoopResetEnv(CustomWrapper):
     def __init__(self, env, noop_max=30):
         """Sample initial states by taking random number of no-ops on reset.
         No-op is assumed to be action 0.
         """
-        gym.Wrapper.__init__(self, env)
+        super().__init__(self, env)
         self.noop_max = noop_max
         self.override_num_noops = None
         self.noop_action = 0
@@ -30,10 +42,10 @@ class NoopResetEnv(gym.Wrapper):
                 obs = self.env.reset(**kwargs)
         return obs
 
-class FireResetEnv(gym.Wrapper):
+class FireResetEnv(CustomWrapper):
     def __init__(self, env):
         """Take action on reset for environments that are fixed until firing."""
-        gym.Wrapper.__init__(self, env)
+        super().__init__(self, env)
         assert env.unwrapped.get_action_meanings()[1] == 'FIRE'
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
@@ -47,12 +59,12 @@ class FireResetEnv(gym.Wrapper):
             self.env.reset(**kwargs)
         return obs
 
-class EpisodicLifeEnv(gym.Wrapper):
+class EpisodicLifeEnv(CustomWrapper):
     def __init__(self, env):
         """Make end-of-life == end-of-episode, but only reset on true game over.
         Done by DeepMind for the DQN and co. since it helps value estimation.
         """
-        gym.Wrapper.__init__(self, env)
+        super().__init__(self, env)
         self.lives = 0
         self.was_real_done  = True
 
@@ -83,10 +95,10 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = self.env.unwrapped.ale.lives()
         return obs
 
-class MaxAndSkipEnv(gym.Wrapper):
+class MaxAndSkipEnv(CustomWrapper):
     def __init__(self, env, skip=4):
         """Return only every `skip`-th frame"""
-        gym.Wrapper.__init__(self, env)
+        super().__init__(self, env)
         # most recent raw observations (for max pooling across time steps)
         self._obs_buffer = np.zeros((2,)+env.observation_space.shape, dtype='uint8')
         self._skip       = skip
@@ -108,15 +120,15 @@ class MaxAndSkipEnv(gym.Wrapper):
 
         return max_frame, total_reward, done, info
 
-class ClipRewardEnv(gym.RewardWrapper):
+class ClipRewardEnv(CustomRewardWrapper):
     def _reward(self, reward):
         """Bin reward to {+1, 0, -1} by its sign."""
         return np.sign(reward)
 
-class WarpFrame(gym.ObservationWrapper):
+class WarpFrame(CustomObservationWrapper):
     def __init__(self, env):
         """Warp frames to 84x84 as done in the Nature paper and later work."""
-        gym.ObservationWrapper.__init__(self, env)
+        super().__init__(self, env)
         self.width = 84
         self.height = 84
         self.observation_space = spaces.Box(low=0, high=255, shape=(self.height, self.width, 1), dtype=np.uint8)
@@ -126,7 +138,7 @@ class WarpFrame(gym.ObservationWrapper):
         frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_AREA)
         return frame[:, :, None]
 
-class FrameStack(gym.Wrapper):
+class FrameStack(CustomWrapper):
     def __init__(self, env, k):
         """Stack k last frames.
 
@@ -136,7 +148,7 @@ class FrameStack(gym.Wrapper):
         --------
         baselines.common.atari_wrappers.LazyFrames
         """
-        gym.Wrapper.__init__(self, env)
+        super().__init__(self, env)
         self.k = k
         self.frames = deque([], maxlen=k)
         shp = env.observation_space.shape
@@ -157,7 +169,7 @@ class FrameStack(gym.Wrapper):
         assert len(self.frames) == self.k
         return LazyFrames(list(self.frames))
 
-class ScaledFloatFrame(gym.ObservationWrapper):
+class ScaledFloatFrame(CustomObservationWrapper):
     def _observation(self, observation):
         # careful! This undoes the memory optimization, use
         # with smaller replay buffers only.
@@ -180,7 +192,7 @@ class LazyFrames(object):
             out = out.astype(dtype)
         return out
 
-class ImageToPyTorch(gym.ObservationWrapper):
+class ImageToPyTorch(CustomObservationWrapper):
     """
     Change image shape to CWH
     """

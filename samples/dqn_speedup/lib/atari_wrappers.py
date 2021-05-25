@@ -21,7 +21,7 @@ class NoopResetEnv(CustomWrapper):
         """Sample initial states by taking random number of no-ops on reset.
         No-op is assumed to be action 0.
         """
-        super().__init__(self, env)
+        super().__init__(env)
         self.noop_max = noop_max
         self.override_num_noops = None
         self.noop_action = 0
@@ -45,7 +45,7 @@ class NoopResetEnv(CustomWrapper):
 class FireResetEnv(CustomWrapper):
     def __init__(self, env):
         """Take action on reset for environments that are fixed until firing."""
-        super().__init__(self, env)
+        super().__init__(env)
         assert env.unwrapped.get_action_meanings()[1] == 'FIRE'
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
@@ -64,7 +64,7 @@ class EpisodicLifeEnv(CustomWrapper):
         """Make end-of-life == end-of-episode, but only reset on true game over.
         Done by DeepMind for the DQN and co. since it helps value estimation.
         """
-        super().__init__(self, env)
+        super().__init__(env)
         self.lives = 0
         self.was_real_done  = True
 
@@ -98,7 +98,7 @@ class EpisodicLifeEnv(CustomWrapper):
 class MaxAndSkipEnv(CustomWrapper):
     def __init__(self, env, skip=4):
         """Return only every `skip`-th frame"""
-        super().__init__(self, env)
+        super().__init__(env)
         # most recent raw observations (for max pooling across time steps)
         self._obs_buffer = np.zeros((2,)+env.observation_space.shape, dtype='uint8')
         self._skip       = skip
@@ -128,7 +128,7 @@ class ClipRewardEnv(CustomRewardWrapper):
 class WarpFrame(CustomObservationWrapper):
     def __init__(self, env):
         """Warp frames to 84x84 as done in the Nature paper and later work."""
-        super().__init__(self, env)
+        super().__init__(env)
         self.width = 84
         self.height = 84
         self.observation_space = spaces.Box(low=0, high=255, shape=(self.height, self.width, 1), dtype=np.uint8)
@@ -148,7 +148,7 @@ class FrameStack(CustomWrapper):
         --------
         baselines.common.atari_wrappers.LazyFrames
         """
-        super().__init__(self, env)
+        super().__init__(env)
         self.k = k
         self.frames = deque([], maxlen=k)
         shp = env.observation_space.shape
@@ -197,7 +197,7 @@ class ImageToPyTorch(CustomObservationWrapper):
     Change image shape to CWH
     """
     def __init__(self, env):
-        super(ImageToPyTorch, self).__init__(env)
+        super().__init__(env)
         old_shape = self.observation_space.shape
         self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=(old_shape[-1], old_shape[0], old_shape[1]), dtype=np.uint8)
 

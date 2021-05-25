@@ -1,6 +1,10 @@
 
 # PTAN
 
+(Forked from https://github.com/Shmuma/ptan - changes here are purely to explore
+the basics of this in colab, so likely nothing of value to anyone else in my own
+repo - use the original for best results)
+
 PTAN stands for PyTorch AgentNet -- reimplementation of
 [AgentNet](https://github.com/yandexdataschool/AgentNet) library for
 [PyTorch](http://pytorch.org/)
